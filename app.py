@@ -29,60 +29,52 @@ workbook = gc.open_by_url(SPREADSHEET_URL)
 worksheet = workbook.get_worksheet(0)
 
 # --- 2. Obtenção de Dados ---
-# 毎回最新のデータを読み込む
 data = worksheet.get_all_values()
 df = pd.DataFrame(data[1:], columns=data[0])
 
 # --- Inicialização do Session State (状態の初期化) ---
-# step 1: 検索画面, step 2: データ入力画面
 if 'step' not in st.session_state:
     st.session_state.step = 1  
 if 'saved_msg' not in st.session_state:
     st.session_state.saved_msg = False
 
-# 入力フォームをクリアするためのキーを初期化
-if 'line_key' not in st.session_state:
-    st.session_state.line_key = None
-if 'plant_key' not in st.session_state:
-    st.session_state.plant_key = None
-if 'april_key' not in st.session_state:
-    st.session_state.april_key = None
+# 【重要】フォームをリセットするためのカウンター
+if 'form_counter' not in st.session_state:
+    st.session_state.form_counter = 0
 
 
 # --- UI ---
 st.title("🌱 Aplicativo de Coleta de Dados")
 st.write("Insira os dados da planta. (Dados de Abril)")
 
-# 保存完了メッセージの表示
 if st.session_state.saved_msg:
     st.success("✅ Dados salvos com sucesso! Pode inserir o próximo dado.")
     st.session_state.saved_msg = False 
 
 
-# --- 3. Fluxo do Aplicativo (アプリの画面遷移) ---
+# --- 3. Fluxo do Aplicativo ---
 
 # ==========================================
 # ステップ1：Line ID と Plant ID の検索画面
 # ==========================================
 if st.session_state.step == 1:
     
-    # widgetにkeyを指定することで、st.session_stateと連動します
+    # keyにカウンターをつけることで、リセット時に全く新しい入力欄として認識させる
     line_number = st.number_input(
         "Número da Linha (ex: '1' para L1)", 
-        min_value=1, step=1, format="%d", value=st.session_state.line_key, placeholder="Ex: 1",
-        key="line_key"
+        min_value=1, step=1, format="%d", value=None, placeholder="Ex: 1",
+        key=f"line_{st.session_state.form_counter}"
     )
     plant_no = st.number_input(
         "Número da Planta (Plant No)", 
-        min_value=1, step=1, format="%d", value=st.session_state.plant_key, placeholder="Ex: 3",
-        key="plant_key"
+        min_value=1, step=1, format="%d", value=None, placeholder="Ex: 3",
+        key=f"plant_{st.session_state.form_counter}"
     )
     
-    # 検索ボタンを押すことで次に進む（枠外タップが不要になります）
     if st.button("🔍 Buscar (検索)"):
-        if st.session_state.line_key is not None and st.session_state.plant_key is not None:
-            selected_line = f"L{st.session_state.line_key}"
-            plant_no_str = str(int(st.session_state.plant_key))
+        if line_number is not None and plant_no is not None:
+            selected_line = f"L{line_number}"
+            plant_no_str = str(int(plant_no))
             
             target_row = df[(df['Line Number'] == selected_line) & 
                             ((df['No of plant'] == plant_no_str) | (df['No of plant'] == f"{plant_no_str}.0"))]
@@ -90,13 +82,11 @@ if st.session_state.step == 1:
             if target_row.empty:
                 st.error("⚠️ A combinação de Número da Linha e Número da Planta não existe.")
             else:
-                # 検索成功時：必要な情報をSession Stateに保存し、ステップ2へ進む
+                # 次の画面で使う情報を保存
                 st.session_state.mother_id = target_row['Mother Id'].values[0]
                 st.session_state.row_index = target_row.index[0] + 2
                 
-                # 既存データの確認 (F列: インデックス5)
                 current_val_str = str(target_row.iloc[0, 5])
-                
                 if current_val_str.strip() == "" or current_val_str.lower() == "nan" or current_val_str.lower() == "none":
                     st.session_state.current_val = 0
                 else:
@@ -105,7 +95,7 @@ if st.session_state.step == 1:
                     except ValueError:
                         st.session_state.current_val = 0
                         
-                # 画面をステップ2に切り替える
+                # ステップ2へ
                 st.session_state.step = 2
                 st.rerun()
         else:
@@ -123,42 +113,33 @@ elif st.session_state.step == 2:
     
     april_value = st.number_input(
         "Valor medido (Apenas números inteiros)", 
-        step=1, format="%d", value=st.session_state.april_key, placeholder="Digite o valor",
-        key="april_key"
+        step=1, format="%d", value=None, placeholder="Digite o valor",
+        key=f"april_{st.session_state.form_counter}"
     )
     
-    # ボタンを横並びに配置
     col1, col2 = st.columns(2)
     
     with col1:
         if st.button("💾 Salvar (保存)"):
-            if st.session_state.april_key is None:
+            if april_value is None:
                 st.warning("⚠️ Por favor, insira o valor medido antes de salvar.")
             else:
                 try:
-                    # 計算と保存
-                    new_value = st.session_state.current_val + st.session_state.april_key
-                    col_index = 6 # F列
-                    worksheet.update_cell(st.session_state.row_index, col_index, new_value)
+                    new_value = st.session_state.current_val + april_value
+                    worksheet.update_cell(st.session_state.row_index, 6, new_value) # F列に保存
                     
-                    # 成功メッセージのフラグを立てる
                     st.session_state.saved_msg = True
                     
-                    # --- 【重要】入力値をリセットしてステップ1に戻る ---
-                    st.session_state.line_key = None
-                    st.session_state.plant_key = None
-                    st.session_state.april_key = None
+                    # --- 成功したらカウンターを増やして入力欄を初期化 ---
+                    st.session_state.form_counter += 1
                     st.session_state.step = 1
-                    
                     st.rerun()
                 except Exception as e:
                     st.error(f"Erro ao salvar: {e}")
                     
     with col2:
         if st.button("❌ Cancelar (キャンセル)"):
-            # キャンセル時も入力値をリセットして戻る
-            st.session_state.line_key = None
-            st.session_state.plant_key = None
-            st.session_state.april_key = None
+            # --- キャンセル時もカウンターを増やして入力欄を初期化 ---
+            st.session_state.form_counter += 1
             st.session_state.step = 1
             st.rerun()
