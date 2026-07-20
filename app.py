@@ -29,6 +29,7 @@ workbook = gc.open_by_url(SPREADSHEET_URL)
 worksheet = workbook.get_worksheet(0)
 
 # --- 2. Obtenção de Dados ---
+# 毎回最新のデータを読み込む
 data = worksheet.get_all_values()
 df = pd.DataFrame(data[1:], columns=data[0])
 
@@ -36,12 +37,10 @@ df = pd.DataFrame(data[1:], columns=data[0])
 st.title("🌱 Aplicativo de Coleta de Dados")
 st.write("Insira os dados da planta. (Dados de Abril)")
 
-# 保存完了メッセージ表示用のフラグ
 if 'saved_msg' not in st.session_state:
     st.session_state.saved_msg = False
 
 # --- 3. Formulário de Busca e Entrada ---
-# 各入力欄に key="..." を追加してシステムで管理できるようにする
 line_number_input = st.number_input(
     "Número da Linha (ex: '1' para L1)", 
     min_value=1, step=1, format="%d", value=None, placeholder="Ex: 1",
@@ -55,10 +54,9 @@ plant_no = st.number_input(
 
 st.divider()
 
-# 保存直後のリロード時に成功メッセージを1度だけ表示する
 if st.session_state.saved_msg:
-    st.success("✅ Dados salvos com sucesso! Pode inserir o próximo dado. (保存完了！次のデータを入力できます)")
-    st.session_state.saved_msg = False # 表示したらすぐにフラグを戻す
+    st.success("✅ Dados salvos com sucesso! Pode inserir o próximo dado.")
+    st.session_state.saved_msg = False 
 
 if line_number_input is not None and plant_no is not None:
     selected_line = f"L{line_number_input}"
@@ -72,6 +70,22 @@ if line_number_input is not None and plant_no is not None:
     else:
         mother_id = target_row['Mother Id'].values[0]
         st.success(f"✅ Confirmação: O Mother ID é 【 {mother_id} 】")
+        
+        # --- 追加: 既存データの確認とメッセージ表示 ---
+        current_val_str = str(target_row.iloc[0, 5]) # 6列目(インデックス5)の値
+        
+        if current_val_str.strip() == "" or current_val_str.lower() == "nan" or current_val_str.lower() == "none":
+            current_val = 0
+        else:
+            try:
+                current_val = int(float(current_val_str))
+            except ValueError:
+                current_val = 0
+        
+        # 既に0以外の数値が入っている場合、通知メッセージを表示
+        if current_val != 0:
+            st.info(f"ℹ️ Aviso: Já existe um valor registrado ({current_val}) para esta planta. O novo valor inserido será adicionado a este.")
+        # ----------------------------------------------
         
         april_value = st.number_input(
             "Valor medido (Apenas números inteiros)", 
@@ -87,28 +101,16 @@ if line_number_input is not None and plant_no is not None:
                 col_index = 6 # F列
                 
                 try:
-                    current_val_str = str(target_row.iloc[0, 5])
-                    
-                    if current_val_str.strip() == "" or current_val_str.lower() == "nan" or current_val_str.lower() == "none":
-                        current_val = 0
-                    else:
-                        try:
-                            current_val = int(float(current_val_str))
-                        except ValueError:
-                            current_val = 0
-                    
+                    # 計算と保存
                     new_value = current_val + april_value
                     worksheet.update_cell(row_index, col_index, new_value)
                     
-                    # メッセージ表示のフラグをONにする
                     st.session_state.saved_msg = True
                     
-                    # 【重要】入力されたデータの記憶（Key）を強制的に削除して空欄に戻す
                     del st.session_state['line_key']
                     del st.session_state['plant_key']
                     del st.session_state['april_key']
                     
-                    # 画面をリロード
                     st.rerun()
                 except Exception as e:
                     st.error(f"Erro ao salvar: {e}")
