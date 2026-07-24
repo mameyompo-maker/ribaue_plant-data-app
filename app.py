@@ -117,32 +117,33 @@ elif st.session_state.step == 2:
         key=f"april_{st.session_state.form_counter}"
     )
     
-    # --- はみ出し防止・幅の厳格化・ボタン着色用CSS ---
+    # --- はみ出し防止・幅の柔軟化・ボタン着色用CSS ---
     st.markdown("""
         <style>
         @media (max-width: 640px) {
-            /* 1. ボタンを包むコンテナを上の入力欄と同じ幅(100%)に固定 */
+            /* 1. ボタンを包むコンテナを横並びにし、隙間を固定 */
             div[data-testid="stHorizontalBlock"] {
                 flex-direction: row !important;
                 flex-wrap: nowrap !important;
-                width: 100% !important;
-                gap: 4% !important; /* ボタン間の隙間 */
+                gap: 10px !important; /* %ではなく固定値にして計算狂いを防ぐ */
             }
-            /* 2. それぞれのボタンの領域を半分以下(48%)に固定 */
+            
+            /* 2. それぞれのカラムが等幅で柔軟に縮むように設定 */
             div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
-                width: 48% !important;
-                min-width: 48% !important;
-                max-width: 48% !important;
-                flex: none !important; /* Streamlitの自動リサイズを無効化 */
+                flex: 1 1 0 !important;
+                width: auto !important;
+                min-width: 0 !important; /* 【重要】テキストが長くてもコンテナを突き破らないようにする */
             }
-            /* 3. ボタンの文字が長い場合に横にはみ出さないよう、文字を折り返す */
+            
+            /* 3. ボタン内の文字を折り返し、高さを確保 */
             div[data-testid="stHorizontalBlock"] button {
                 width: 100% !important;
-                padding: 0.5rem 0.2rem !important;
-                font-size: 0.8rem !important;
-                white-space: normal !important; /* ここが重要: 文字を折り返す */
+                white-space: normal !important;
                 word-break: break-word !important;
-                min-height: 3.5em !important;
+                font-size: 0.8rem !important;
+                padding: 0.5rem !important;
+                height: auto !important;
+                min-height: 60px !important; /* 折り返した時に見切れないように最低高さを設定 */
             }
         }
         
