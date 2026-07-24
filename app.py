@@ -112,36 +112,43 @@ elif st.session_state.step == 2:
         key=f"april_{st.session_state.form_counter}"
     )
     
-    # --- 【修正】幅をピタリと合わせるための強力なCSS ---
+    # --- 【最終修正】画面からはみ出さないための強制CSS ---
     st.markdown("""
         <style>
+        /* アプリ全体の横スクロールを防止 */
+        .stApp {
+            overflow-x: hidden !important;
+        }
+
         @media (max-width: 640px) {
-            /* 1. カラム全体を横並びに強制し、幅を100%に固定 */
+            /* 1. カラム全体を横並びに強制し、幅を入力欄と同じ100%に固定 */
             div[data-testid="stHorizontalBlock"] {
                 display: flex !important;
                 flex-direction: row !important;
                 flex-wrap: nowrap !important;
                 width: 100% !important;
-                gap: 10px !important; /* ボタン間の隙間を10pxに固定 */
+                gap: 5px !important; /* ボタン間の隙間を少し狭く設定 */
             }
             
-            /* 2. Streamlitの自動幅計算を無効化し、厳密に「50% - 隙間の半分(5px)」に固定 */
+            /* 2. 【最重要】Streamlitが持つ最低幅制限(min-width)を破壊し、厳密に50%にする */
             div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
-                width: calc(50% - 5px) !important;
-                min-width: calc(50% - 5px) !important;
-                max-width: calc(50% - 5px) !important;
-                flex: none !important;
+                width: 50% !important;
+                min-width: 0px !important; /* ここが 0 じゃないとはみ出します */
+                max-width: 50% !important;
+                flex: 1 1 0% !important;
                 padding: 0 !important;
             }
             
-            /* 3. ボタンのテキストが幅を突き破らないように設定 */
+            /* 3. ボタンのテキストがはみ出さないように調整 */
             div[data-testid="stHorizontalBlock"] button {
                 width: 100% !important;
+                min-width: 0px !important;
                 white-space: normal !important;
-                word-wrap: break-word !important; /* 長い単語を強制的に折り返す */
-                height: auto !important;
-                min-height: 60px !important; 
-                padding: 5px !important;
+                word-wrap: break-word !important; 
+                padding: 5px 2px !important; /* 左右の余白を減らして文字を入りやすくする */
+                font-size: 0.8rem !important;
+                min-height: 50px !important; 
+                height: 100% !important;
                 margin: 0 !important;
             }
         }
@@ -172,8 +179,7 @@ elif st.session_state.step == 2:
         </style>
     """, unsafe_allow_html=True)
 
-    # ギャップを小さく設定して展開
-    col1, col2 = st.columns(2, gap="small")
+    col1, col2 = st.columns(2)
     
     with col1:
         if st.button("💾 Salvar (保存)", use_container_width=True):
