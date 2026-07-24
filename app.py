@@ -117,16 +117,30 @@ elif st.session_state.step == 2:
         key=f"april_{st.session_state.form_counter}"
     )
     
-    # ▼▼▼ 追加：ボタンの色を個別に設定するカスタムCSS ▼▼▼
+    # --- スマホ対応＆ボタン着色用CSS ---
     st.markdown("""
         <style>
+        /* スマホ画面（640px以下）でも強制的にカラムを横並びにする設定 */
+        @media (max-width: 640px) {
+            div[data-testid="stHorizontalBlock"] {
+                flex-direction: row !important;
+                display: flex !important;
+                flex-wrap: nowrap !important;
+                gap: 0.5rem !important;
+            }
+            div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
+                width: 50% !important;
+                min-width: 50% !important;
+                flex: 1 1 50% !important;
+            }
+        }
+        
         /* 左側のカラム(1つ目)のボタンを緑色に */
         div[data-testid="column"]:nth-of-type(1) button {
             background-color: #28a745 !important;
             color: white !important;
             border-color: #28a745 !important;
         }
-        /* 緑色ボタンのホバー（マウスオーバー）時の色 */
         div[data-testid="column"]:nth-of-type(1) button:hover {
             background-color: #218838 !important;
             border-color: #218838 !important;
@@ -139,7 +153,6 @@ elif st.session_state.step == 2:
             color: white !important;
             border-color: #dc3545 !important;
         }
-        /* 赤色ボタンのホバー（マウスオーバー）時の色 */
         div[data-testid="column"]:nth-of-type(2) button:hover {
             background-color: #c82333 !important;
             border-color: #c82333 !important;
@@ -147,12 +160,10 @@ elif st.session_state.step == 2:
         }
         </style>
     """, unsafe_allow_html=True)
-    # ▲▲▲ 追加ここまで ▲▲▲
 
     col1, col2 = st.columns(2)
     
     with col1:
-        # 見栄えを良くするため use_container_width=True を追加
         if st.button("💾 Salvar (保存)", use_container_width=True):
             if april_value is None:
                 st.warning("⚠️ Por favor, insira o valor medido antes de salvar.")
@@ -171,7 +182,6 @@ elif st.session_state.step == 2:
                     st.error(f"Erro ao salvar: {e}")
                     
     with col2:
-        # こちらも use_container_width=True を追加
         if st.button("❌ Cancelar (キャンセル)", use_container_width=True):
             # --- キャンセル時もカウンターを増やして入力欄を初期化 ---
             st.session_state.form_counter += 1
