@@ -24,7 +24,7 @@ except FileNotFoundError:
 gc = gspread.authorize(credentials)
 
 # ※ご自身のスプレッドシートURLを設定してください
-SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1JMHE0MGolPnkFlYu04om-AiXzJxqFWW1Cd7IwRKpJmM/edit?gid=864123872#gid=864123872"
+SPREADSHEET_URL = "ここにスプレッドシートのURLを貼り付ける"
 workbook = gc.open_by_url(SPREADSHEET_URL)
 worksheet = workbook.get_worksheet(0)
 
@@ -117,12 +117,39 @@ elif st.session_state.step == 2:
         key=f"april_{st.session_state.form_counter}"
     )
     
-    # 変更点：カラムの幅の比率を 3:1 (あるいは 4:1) に設定し、左を大きく、右を小さくする
+    # --- カスタムCSSの適用（ボタンの色を変更） ---
+    # Streamlitの仕様上、カラムの順番を指定してCSSを適用します
+    st.markdown("""
+    <style>
+    /* 左側(1つ目)のカラムにあるボタン（保存・完了）を緑色にする */
+    div[data-testid="column"]:nth-of-type(1) button {
+        background-color: #28a745 !important;
+        color: white !important;
+        border-color: #28a745 !important;
+    }
+    div[data-testid="column"]:nth-of-type(1) button:hover {
+        background-color: #218838 !important;
+        border-color: #218838 !important;
+    }
+
+    /* 右側(2つ目)のカラムにあるボタン（キャンセル）を赤色にする */
+    div[data-testid="column"]:nth-of-type(2) button {
+        background-color: #dc3545 !important;
+        color: white !important;
+        border-color: #dc3545 !important;
+    }
+    div[data-testid="column"]:nth-of-type(2) button:hover {
+        background-color: #c82333 !important;
+        border-color: #c82333 !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # 完了（保存）ボタンを左側に大きく、キャンセルボタンを右側に小さく配置 (比率 3:1)
     col1, col2 = st.columns([3, 1])
     
-    with col1:
-        # use_container_width=True でカラム幅いっぱいに広げ、type="primary" でボタンを目立たせる
-        if st.button("💾 Salvar (保存)", use_container_width=True, type="primary"):
+    with col1: # 左側の大きなカラム
+        if st.button("💾 Salvar (保存/完了)", use_container_width=True):
             if april_value is None:
                 st.warning("⚠️ Por favor, insira o valor medido antes de salvar.")
             else:
@@ -132,17 +159,14 @@ elif st.session_state.step == 2:
                     
                     st.session_state.saved_msg = True
                     
-                    # --- 成功したらカウンターを増やして入力欄を初期化 ---
                     st.session_state.form_counter += 1
                     st.session_state.step = 1
                     st.rerun()
                 except Exception as e:
                     st.error(f"Erro ao salvar: {e}")
                     
-    with col2:
-        # こちらも use_container_width=True でカラムに合わせる（カラム自体が小さいのでボタンも小さくなる）
+    with col2: # 右側の小さなカラム
         if st.button("❌ Cancelar (キャンセル)", use_container_width=True):
-            # --- キャンセル時もカウンターを増やして入力欄を初期化 ---
             st.session_state.form_counter += 1
             st.session_state.step = 1
             st.rerun()
