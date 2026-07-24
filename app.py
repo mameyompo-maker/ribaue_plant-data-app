@@ -112,44 +112,50 @@ elif st.session_state.step == 2:
         key=f"april_{st.session_state.form_counter}"
     )
     
-    # --- 【最終修正】画面からはみ出さないための強制CSS ---
+    # --- 【完全改修版】CSS Gridによる厳格なレイアウトと内部テキストの折り返し ---
     st.markdown("""
         <style>
-        /* アプリ全体の横スクロールを防止 */
+        /* 全体の横スクロールを強制的にオフ */
         .stApp {
             overflow-x: hidden !important;
         }
 
         @media (max-width: 640px) {
-            /* 1. カラム全体を横並びに強制し、幅を入力欄と同じ100%に固定 */
+            /* 1. Flexboxをやめ、厳格に2分割するGridレイアウトを採用 */
             div[data-testid="stHorizontalBlock"] {
-                display: flex !important;
-                flex-direction: row !important;
-                flex-wrap: nowrap !important;
+                display: grid !important;
+                grid-template-columns: 1fr 1fr !important; /* 均等な2つのマス目を作成 */
+                gap: 10px !important;
                 width: 100% !important;
-                gap: 5px !important; /* ボタン間の隙間を少し狭く設定 */
             }
             
-            /* 2. 【最重要】Streamlitが持つ最低幅制限(min-width)を破壊し、厳密に50%にする */
+            /* 2. カラムをGridのマス目に強制的に従わせる */
             div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
-                width: 50% !important;
-                min-width: 0px !important; /* ここが 0 じゃないとはみ出します */
-                max-width: 50% !important;
-                flex: 1 1 0% !important;
+                width: 100% !important;
+                min-width: 0px !important;
+                max-width: 100% !important;
                 padding: 0 !important;
             }
             
-            /* 3. ボタンのテキストがはみ出さないように調整 */
+            /* 3. ボタン本体がマス目をはみ出さないように設定 */
             div[data-testid="stHorizontalBlock"] button {
                 width: 100% !important;
                 min-width: 0px !important;
-                white-space: normal !important;
-                word-wrap: break-word !important; 
-                padding: 5px 2px !important; /* 左右の余白を減らして文字を入りやすくする */
-                font-size: 0.8rem !important;
-                min-height: 50px !important; 
-                height: 100% !important;
+                height: auto !important;
+                min-height: 65px !important; /* テキストが2行になってもいいように高さを確保 */
+                padding: 4px !important;
                 margin: 0 !important;
+            }
+            
+            /* 4. 【最重要】ボタン内部のテキスト（つっかえ棒）を強制的に折り返させる */
+            div[data-testid="stHorizontalBlock"] button p,
+            div[data-testid="stHorizontalBlock"] button div,
+            div[data-testid="stHorizontalBlock"] button span {
+                white-space: normal !important; 
+                word-wrap: break-word !important; 
+                text-align: center !important;
+                font-size: 0.8rem !important; /* スマホ向けに文字サイズを微調整 */
+                line-height: 1.2 !important;
             }
         }
         
@@ -159,22 +165,12 @@ elif st.session_state.step == 2:
             color: white !important;
             border-color: #28a745 !important;
         }
-        div[data-testid="column"]:nth-of-type(1) button:hover {
-            background-color: #218838 !important;
-            border-color: #218838 !important;
-            color: white !important;
-        }
         
         /* 右側のカラム(2つ目)のボタンを赤色に */
         div[data-testid="column"]:nth-of-type(2) button {
             background-color: #dc3545 !important;
             color: white !important;
             border-color: #dc3545 !important;
-        }
-        div[data-testid="column"]:nth-of-type(2) button:hover {
-            background-color: #c82333 !important;
-            border-color: #c82333 !important;
-            color: white !important;
         }
         </style>
     """, unsafe_allow_html=True)
