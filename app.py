@@ -24,7 +24,7 @@ except FileNotFoundError:
 gc = gspread.authorize(credentials)
 
 # ※ご自身のスプレッドシートURLを設定してください
-SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1JMHE0MGolPnkFlYu04om-AiXzJxqFWW1Cd7IwRKpJmM/edit?gid=864123872#gid=864123872"
+SPREADSHEET_URL = "ここにスプレッドシートのURLを貼り付ける"
 workbook = gc.open_by_url(SPREADSHEET_URL)
 worksheet = workbook.get_worksheet(0)
 
@@ -117,10 +117,12 @@ elif st.session_state.step == 2:
         key=f"april_{st.session_state.form_counter}"
     )
     
-    col1, col2 = st.columns(2)
+    # 変更点：カラムの幅の比率を 3:1 (あるいは 4:1) に設定し、左を大きく、右を小さくする
+    col1, col2 = st.columns([3, 1])
     
     with col1:
-        if st.button("💾 Salvar (保存)"):
+        # use_container_width=True でカラム幅いっぱいに広げ、type="primary" でボタンを目立たせる
+        if st.button("💾 Salvar (保存)", use_container_width=True, type="primary"):
             if april_value is None:
                 st.warning("⚠️ Por favor, insira o valor medido antes de salvar.")
             else:
@@ -138,7 +140,8 @@ elif st.session_state.step == 2:
                     st.error(f"Erro ao salvar: {e}")
                     
     with col2:
-        if st.button("❌ Cancelar (キャンセル)"):
+        # こちらも use_container_width=True でカラムに合わせる（カラム自体が小さいのでボタンも小さくなる）
+        if st.button("❌ Cancelar (キャンセル)", use_container_width=True):
             # --- キャンセル時もカウンターを増やして入力欄を初期化 ---
             st.session_state.form_counter += 1
             st.session_state.step = 1
