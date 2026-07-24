@@ -117,26 +117,32 @@ elif st.session_state.step == 2:
         key=f"april_{st.session_state.form_counter}"
     )
     
-    # --- スマホ対応＆ボタン着色用CSS ---
+    # --- はみ出し防止・幅の厳格化・ボタン着色用CSS ---
     st.markdown("""
         <style>
-        /* スマホ画面（640px以下）で画面内にピッタリ横並びで収める設定 */
         @media (max-width: 640px) {
+            /* 1. ボタンを包むコンテナを上の入力欄と同じ幅(100%)に固定 */
             div[data-testid="stHorizontalBlock"] {
                 flex-direction: row !important;
-                display: flex !important;
                 flex-wrap: nowrap !important;
-                gap: 10px !important; /* ボタン間の隙間 */
-            }
-            div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
                 width: 100% !important;
-                min-width: 0 !important; /* 画面幅をはみ出さないための魔法のコード */
-                flex: 1 1 0 !important; /* 左右の幅を完全に均等にする */
+                gap: 4% !important; /* ボタン間の隙間 */
             }
-            /* ボタン内の余白と文字サイズをスマホ向けに少し小さくする */
+            /* 2. それぞれのボタンの領域を半分以下(48%)に固定 */
+            div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
+                width: 48% !important;
+                min-width: 48% !important;
+                max-width: 48% !important;
+                flex: none !important; /* Streamlitの自動リサイズを無効化 */
+            }
+            /* 3. ボタンの文字が長い場合に横にはみ出さないよう、文字を折り返す */
             div[data-testid="stHorizontalBlock"] button {
-                padding: 0.3rem 0.1rem !important;
+                width: 100% !important;
+                padding: 0.5rem 0.2rem !important;
                 font-size: 0.8rem !important;
+                white-space: normal !important; /* ここが重要: 文字を折り返す */
+                word-break: break-word !important;
+                min-height: 3.5em !important;
             }
         }
         
