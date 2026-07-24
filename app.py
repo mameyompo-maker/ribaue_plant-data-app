@@ -38,10 +38,8 @@ if 'step' not in st.session_state:
 if 'saved_msg' not in st.session_state:
     st.session_state.saved_msg = False
 
-# 【重要】フォームをリセットするためのカウンター
 if 'form_counter' not in st.session_state:
     st.session_state.form_counter = 0
-
 
 # --- UI ---
 st.title("🌱 Aplicativo de Coleta de Dados")
@@ -59,7 +57,6 @@ if st.session_state.saved_msg:
 # ==========================================
 if st.session_state.step == 1:
     
-    # keyにカウンターをつけることで、リセット時に全く新しい入力欄として認識させる
     line_number = st.number_input(
         "Número da Linha (ex: '1' para L1)", 
         min_value=1, step=1, format="%d", value=None, placeholder="Ex: 1",
@@ -82,7 +79,6 @@ if st.session_state.step == 1:
             if target_row.empty:
                 st.error("⚠️ A combinação de Número da Linha e Número da Planta não existe.")
             else:
-                # 次の画面で使う情報を保存
                 st.session_state.mother_id = target_row['Mother Id'].values[0]
                 st.session_state.row_index = target_row.index[0] + 2
                 
@@ -95,7 +91,6 @@ if st.session_state.step == 1:
                     except ValueError:
                         st.session_state.current_val = 0
                         
-                # ステップ2へ
                 st.session_state.step = 2
                 st.rerun()
         else:
@@ -117,33 +112,37 @@ elif st.session_state.step == 2:
         key=f"april_{st.session_state.form_counter}"
     )
     
-    # --- はみ出し防止・幅の柔軟化・ボタン着色用CSS ---
+    # --- 【修正】幅をピタリと合わせるための強力なCSS ---
     st.markdown("""
         <style>
         @media (max-width: 640px) {
-            /* 1. ボタンを包むコンテナを横並びにし、隙間を固定 */
+            /* 1. カラム全体を横並びに強制し、幅を100%に固定 */
             div[data-testid="stHorizontalBlock"] {
+                display: flex !important;
                 flex-direction: row !important;
                 flex-wrap: nowrap !important;
-                gap: 10px !important; /* %ではなく固定値にして計算狂いを防ぐ */
+                width: 100% !important;
+                gap: 10px !important; /* ボタン間の隙間を10pxに固定 */
             }
             
-            /* 2. それぞれのカラムが等幅で柔軟に縮むように設定 */
+            /* 2. Streamlitの自動幅計算を無効化し、厳密に「50% - 隙間の半分(5px)」に固定 */
             div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
-                flex: 1 1 0 !important;
-                width: auto !important;
-                min-width: 0 !important; /* 【重要】テキストが長くてもコンテナを突き破らないようにする */
+                width: calc(50% - 5px) !important;
+                min-width: calc(50% - 5px) !important;
+                max-width: calc(50% - 5px) !important;
+                flex: none !important;
+                padding: 0 !important;
             }
             
-            /* 3. ボタン内の文字を折り返し、高さを確保 */
+            /* 3. ボタンのテキストが幅を突き破らないように設定 */
             div[data-testid="stHorizontalBlock"] button {
                 width: 100% !important;
                 white-space: normal !important;
-                word-break: break-word !important;
-                font-size: 0.8rem !important;
-                padding: 0.5rem !important;
+                word-wrap: break-word !important; /* 長い単語を強制的に折り返す */
                 height: auto !important;
-                min-height: 60px !important; /* 折り返した時に見切れないように最低高さを設定 */
+                min-height: 60px !important; 
+                padding: 5px !important;
+                margin: 0 !important;
             }
         }
         
@@ -173,7 +172,8 @@ elif st.session_state.step == 2:
         </style>
     """, unsafe_allow_html=True)
 
-    col1, col2 = st.columns(2)
+    # ギャップを小さく設定して展開
+    col1, col2 = st.columns(2, gap="small")
     
     with col1:
         if st.button("💾 Salvar (保存)", use_container_width=True):
@@ -185,8 +185,6 @@ elif st.session_state.step == 2:
                     worksheet.update_cell(st.session_state.row_index, 6, new_value) # F列に保存
                     
                     st.session_state.saved_msg = True
-                    
-                    # --- 成功したらカウンターを増やして入力欄を初期化 ---
                     st.session_state.form_counter += 1
                     st.session_state.step = 1
                     st.rerun()
@@ -195,7 +193,6 @@ elif st.session_state.step == 2:
                     
     with col2:
         if st.button("❌ Cancelar (キャンセル)", use_container_width=True):
-            # --- キャンセル時もカウンターを増やして入力欄を初期化 ---
             st.session_state.form_counter += 1
             st.session_state.step = 1
             st.rerun()
