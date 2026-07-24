@@ -24,7 +24,7 @@ except FileNotFoundError:
 gc = gspread.authorize(credentials)
 
 # ※ご自身のスプレッドシートURLを設定してください
-SPREADSHEET_URL = "ここにスプレッドシートのURLを貼り付ける"
+SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1JMHE0MGolPnkFlYu04om-AiXzJxqFWW1Cd7IwRKpJmM/edit?gid=864123872#gid=864123872"
 workbook = gc.open_by_url(SPREADSHEET_URL)
 worksheet = workbook.get_worksheet(0)
 
