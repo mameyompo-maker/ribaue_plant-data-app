@@ -120,18 +120,23 @@ elif st.session_state.step == 2:
     # --- スマホ対応＆ボタン着色用CSS ---
     st.markdown("""
         <style>
-        /* スマホ画面（640px以下）でも強制的にカラムを横並びにする設定 */
+        /* スマホ画面（640px以下）で画面内にピッタリ横並びで収める設定 */
         @media (max-width: 640px) {
             div[data-testid="stHorizontalBlock"] {
                 flex-direction: row !important;
                 display: flex !important;
                 flex-wrap: nowrap !important;
-                gap: 0.5rem !important;
+                gap: 10px !important; /* ボタン間の隙間 */
             }
             div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
-                width: 50% !important;
-                min-width: 50% !important;
-                flex: 1 1 50% !important;
+                width: 100% !important;
+                min-width: 0 !important; /* 画面幅をはみ出さないための魔法のコード */
+                flex: 1 1 0 !important; /* 左右の幅を完全に均等にする */
+            }
+            /* ボタン内の余白と文字サイズをスマホ向けに少し小さくする */
+            div[data-testid="stHorizontalBlock"] button {
+                padding: 0.3rem 0.1rem !important;
+                font-size: 0.8rem !important;
             }
         }
         
