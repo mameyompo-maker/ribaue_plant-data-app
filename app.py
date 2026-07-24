@@ -117,39 +117,43 @@ elif st.session_state.step == 2:
         key=f"april_{st.session_state.form_counter}"
     )
     
-    # --- カスタムCSSの適用（ボタンの色を変更） ---
-    # Streamlitの仕様上、カラムの順番を指定してCSSを適用します
+    # ▼▼▼ 追加：ボタンの色を個別に設定するカスタムCSS ▼▼▼
     st.markdown("""
-    <style>
-    /* 左側(1つ目)のカラムにあるボタン（保存・完了）を緑色にする */
-    div[data-testid="column"]:nth-of-type(1) button {
-        background-color: #28a745 !important;
-        color: white !important;
-        border-color: #28a745 !important;
-    }
-    div[data-testid="column"]:nth-of-type(1) button:hover {
-        background-color: #218838 !important;
-        border-color: #218838 !important;
-    }
-
-    /* 右側(2つ目)のカラムにあるボタン（キャンセル）を赤色にする */
-    div[data-testid="column"]:nth-of-type(2) button {
-        background-color: #dc3545 !important;
-        color: white !important;
-        border-color: #dc3545 !important;
-    }
-    div[data-testid="column"]:nth-of-type(2) button:hover {
-        background-color: #c82333 !important;
-        border-color: #c82333 !important;
-    }
-    </style>
+        <style>
+        /* 左側のカラム(1つ目)のボタンを緑色に */
+        div[data-testid="column"]:nth-of-type(1) button {
+            background-color: #28a745 !important;
+            color: white !important;
+            border-color: #28a745 !important;
+        }
+        /* 緑色ボタンのホバー（マウスオーバー）時の色 */
+        div[data-testid="column"]:nth-of-type(1) button:hover {
+            background-color: #218838 !important;
+            border-color: #218838 !important;
+            color: white !important;
+        }
+        
+        /* 右側のカラム(2つ目)のボタンを赤色に */
+        div[data-testid="column"]:nth-of-type(2) button {
+            background-color: #dc3545 !important;
+            color: white !important;
+            border-color: #dc3545 !important;
+        }
+        /* 赤色ボタンのホバー（マウスオーバー）時の色 */
+        div[data-testid="column"]:nth-of-type(2) button:hover {
+            background-color: #c82333 !important;
+            border-color: #c82333 !important;
+            color: white !important;
+        }
+        </style>
     """, unsafe_allow_html=True)
+    # ▲▲▲ 追加ここまで ▲▲▲
+
+    col1, col2 = st.columns(2)
     
-    # 完了（保存）ボタンを左側に大きく、キャンセルボタンを右側に小さく配置 (比率 3:1)
-    col1, col2 = st.columns([3, 1])
-    
-    with col1: # 左側の大きなカラム
-        if st.button("💾 Salvar (保存/完了)", use_container_width=True):
+    with col1:
+        # 見栄えを良くするため use_container_width=True を追加
+        if st.button("💾 Salvar (保存)", use_container_width=True):
             if april_value is None:
                 st.warning("⚠️ Por favor, insira o valor medido antes de salvar.")
             else:
@@ -159,14 +163,17 @@ elif st.session_state.step == 2:
                     
                     st.session_state.saved_msg = True
                     
+                    # --- 成功したらカウンターを増やして入力欄を初期化 ---
                     st.session_state.form_counter += 1
                     st.session_state.step = 1
                     st.rerun()
                 except Exception as e:
                     st.error(f"Erro ao salvar: {e}")
                     
-    with col2: # 右側の小さなカラム
+    with col2:
+        # こちらも use_container_width=True を追加
         if st.button("❌ Cancelar (キャンセル)", use_container_width=True):
+            # --- キャンセル時もカウンターを増やして入力欄を初期化 ---
             st.session_state.form_counter += 1
             st.session_state.step = 1
             st.rerun()
